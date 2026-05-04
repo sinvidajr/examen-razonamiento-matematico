@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Examen: Desafío de Razonamiento Matemático</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --logic-green: #00ff88;
+    --cyber-blue: #00d4ff;
+    --dark-void: #050505;
+    --card-glass: rgba(10, 20, 30, 0.9);
+    --border-glow: rgba(0, 255, 136, 0.3);
+  }
+  body {
+    background-color: var(--dark-void);
+    background-image: radial-gradient(circle at center, #111 0%, #000 100%);
+    color: #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  header {
+    width: 100%; padding: 1.5rem; text-align: center;
+    border-bottom: 2px solid var(--logic-green);
+    background: rgba(0,0,0,0.8); box-shadow: 0 0 20px var(--border-glow);
+    margin-bottom: 2rem;
+  }
+  header h1 {
+    font-family: 'Orbitron', sans-serif; font-size: 1.8rem;
+    color: var(--logic-green); text-shadow: 0 0 10px var(--logic-green);
+    letter-spacing: 2px;
+  }
+  .container { width: 100%; max-width: 800px; padding: 0 1.5rem 4rem; }
+  .card {
+    background: var(--card-glass); backdrop-filter: blur(10px);
+    border: 1px solid var(--logic-green); border-radius: 15px;
+    padding: 2rem; box-shadow: 0 0 30px rgba(0,0,0,1);
+  }
+  input {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--cyber-blue);
+    padding: 1rem; border-radius: 5px; color: white; width: 100%; margin-bottom: 1rem;
+  }
+  .progress-info {
+    display: flex; justify-content: space-between;
+    font-family: 'Orbitron', sans-serif; font-size: 0.8rem;
+    color: var(--cyber-blue); margin-bottom: 1rem;
+  }
+  .q-text { 
+    font-size: 1.2rem; margin-bottom: 2rem; line-height: 1.5;
+    border-left: 4px solid var(--cyber-blue); padding-left: 1rem;
+  }
+  .options { display: grid; gap: 0.8rem; }
+  .option-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(0, 212, 255, 0.3);
+    padding: 1rem; border-radius: 8px; color: white; text-align: left;
+    cursor: pointer; transition: 0.2s; font-size: 1rem;
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--cyber-blue); background: rgba(0, 212, 255, 0.1); }
+  .option-btn.correct { background: rgba(0, 255, 136, 0.2) !important; border-color: var(--logic-green) !important; }
+  .option-btn.wrong { background: rgba(255, 50, 50, 0.2) !important; border-color: #ff3232 !important; }
+  
+  .explanation {
+    margin-top: 1.5rem; padding: 1rem; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--cyber-blue);
+    display: none; font-size: 0.95rem; line-height: 1.4; color: #fff;
+  }
+  .btn {
+    padding: 1rem 2.5rem; background: var(--logic-green); color: black;
+    border: none; border-radius: 5px; font-family: 'Orbitron', sans-serif;
+    font-weight: bold; cursor: pointer; margin-top: 1.5rem; text-transform: uppercase;
+  }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header><h1>RAZONAMIENTO MATEMÁTICO: PREGUNTAS</h1></header>
+
+<div class="container">
+  <div id="lock-screen" class="card" style="display:none; text-align:center;">
+    <h2 style="color: #ff3232;">ACCESO RESTRINGIDO</h2>
+    <p>Ya has realizado tu intento para esta evaluación.</p>
+  </div>
+
+  <div id="auth-screen" class="card">
+    <h3 style="margin-bottom:1rem; font-family:'Orbitron'">IDENTIFICACIÓN</h3>
+    <input type="text" id="user-name" placeholder="Nombres">
+    <input type="text" id="user-lastname" placeholder="Apellidos">
+    <button class="btn" onclick="initQuiz()">Iniciar Examen</button>
+  </div>
+
+  <div id="quiz-screen" style="display:none;">
+    <div class="progress-info">
+      <span id="q-idx">NIVEL: 1/50</span>
+      <span id="live-score">NOTA: 0.0</span>
+    </div>
+    <div class="card">
+      <div id="q-text" class="q-text"></div>
+      <div id="options-box" class="options"></div>
+      <div id="explanation-box" class="explanation"></div>
+      <button id="next-btn" class="btn" disabled>Siguiente Nivel</button>
+    </div>
+  </div>
+
+  <div id="result-screen" class="card" style="display:none; text-align:center;">
+    <h2 id="final-name" style="font-family:'Orbitron'"></h2>
+    <p>PUNTAJE FINAL (Escala 0-20):</p>
+    <div style="font-size:4rem; color:var(--logic-green); font-family:'Orbitron'" id="final-note">0.0</div>
+    <p id="final-msg"></p>
+  </div>
+</div>
+
+<script>
+const questions = [
+  // ORDEN DE INFORMACIÓN (1-12)
+  { q: "Seis amigos se sientan alrededor de una mesa circular. Si Ana está frente a Beto, y Beto está junto a Carla y Daniel, ¿quién está frente a Carla?", opts: ["Daniel", "Ana", "Beto", "Faltan datos"], ans: 3, exp: "Faltan datos porque Carla puede estar a la izquierda o derecha de Beto, lo que cambia quién queda al frente." },
+  { q: "Cuatro hermanos viven en un edificio de 4 pisos. Arturo vive en el 1er piso, Mario vive más abajo que Jorge y Willy vive un piso arriba de Mario. ¿En qué piso vive Jorge?", opts: ["2do", "3ro", "4to", "1ro"], ans: 2, exp: "Arturo(1). Si Mario vive más abajo que Jorge y Willy arriba de Mario: Mario(2), Willy(3), Jorge(4)." },
+  { q: "En una carrera, A llegó después de B, C llegó antes de D, y B llegó después de D. ¿Quién ganó?", opts: ["A", "B", "C", "D"], ans: 2, exp: "Orden: C > D > B > A. El ganador es C." },
+  { q: "Cinco personas (P, Q, R, S, T) hacen cola. S está antes que P y después que T. R está después que Q y antes que T. ¿Quién es el último?", opts: ["P", "Q", "R", "S"], ans: 0, exp: "Orden: Q > R > T > S > P. El último es P." },
+  { q: "En una mesa circular de 4 asientos, Luis no se sienta frente a Juan. Si Pedro está a la izquierda de Luis, ¿quién está frente a Luis?", opts: ["Juan", "Pedro", "Raúl", "Nadie"], ans: 2, exp: "Si Luis tiene a Pedro a la izquierda y Juan no está al frente, Juan debe estar a su derecha. Raúl queda al frente." },
+  { q: "Sabiendo que: Roberto es más alto que Juana, y que Juana no es más alta que Pedro. ¿Quién es el más bajo?", opts: ["Roberto", "Juana", "Pedro", "No se puede saber"], ans: 1, exp: "Roberto > Juana y Pedro > Juana. Juana es la más baja de todos." },
+  { q: "Cuatro amigas van al cine. María se sienta a la izquierda de Lucía. Inés no está junto a Lucía. Si Rosa está a la derecha de Lucía, ¿quién está en el extremo izquierdo?", opts: ["Inés", "María", "Rosa", "Lucía"], ans: 0, exp: "Orden de izquierda a derecha: Inés, María, Lucía, Rosa." },
+  { q: "Cinco autos están estacionados en fila. El azul está entre el rojo y el verde. El gris está junto al rojo. El negro está a la derecha del gris. ¿Qué auto está en el centro?", opts: ["Rojo", "Azul", "Verde", "Gris"], ans: 0, exp: "Fila: Verde - Azul - Rojo - Gris - Negro (O viceversa). El Rojo queda al centro." },
+  { q: "Si el edificio de 5 pisos tiene a los López en el 2do y los Pérez un piso arriba de los Soto, quienes viven 2 pisos debajo de los García (quienes viven en el 5to). ¿Dónde viven los Soto?", opts: ["1ro", "2do", "3ro", "4to"], ans: 2, exp: "García(5). Dos pisos abajo de García es 3er piso (Soto)." },
+  { q: "En una fila de 4 personas, Ana está junto a Bea. Bea no está junto a Clo. Si Clo está al final, ¿quién está al otro extremo?", opts: ["Ana", "Bea", "Clo", "Faltan datos"], ans: 0, exp: "Orden: Ana - Bea - (vacio) - Clo. Ana está al extremo." },
+  { q: "En una competencia, el auto X llegó 2 puestos detrás de Y. Z llegó inmediatamente después de X. Si W ganó, ¿quién quedó 2do?", opts: ["X", "Y", "Z", "W"], ans: 1, exp: "Orden: W(1), Y(2), (vacio)(3), X(4), Z(5). El 2do es Y." },
+  { q: "Cuatro deportistas (A,B,C,D) son de distintas tallas. C es más bajo que A pero más alto que D. B es más alto que A. ¿Quién es el segundo más alto?", opts: ["A", "B", "C", "D"], ans: 0, exp: "Orden: B > A > C > D. El segundo es A." },
+
+  // LAZOS FAMILIARES (13-24)
+  { q: "¿Qué es de mí el abuelo del hijo de mi hermano?", opts: ["Mi padre", "Mi tío", "Mi abuelo", "Mi sobrino"], ans: 0, exp: "Hijo de mi hermano es mi sobrino. Su abuelo es el padre de mi hermano, o sea, mi padre." },
+  { q: "En una familia hay 2 padres, 2 hijos y 1 nieto. ¿Cuántas personas como mínimo hay?", opts: ["5", "4", "3", "2"], ans: 2, exp: "Abuelo (Padre 1), Padre (Padre 2 e Hijo 1) e Hijo (Hijo 2 y Nieto). Total: 3." },
+  { q: "¿Qué parentesco tiene conmigo la hija de la hermana de mi madre?", opts: ["Mi tía", "Mi prima", "Mi sobrina", "Mi hermana"], ans: 1, exp: "Hermana de mi madre es mi tía. Su hija es mi prima." },
+  { q: "Si el hijo de Juan es el padre de mi hijo, ¿qué soy yo de Juan?", opts: ["Su hijo", "Su nieto", "Su padre", "Su tío"], ans: 0, exp: "Si el padre de mi hijo soy yo, entonces el hijo de Juan soy yo. Soy su hijo." },
+  { q: "El único hermano del padre de mi madre es mi:", opts: ["Tío abuelo", "Abuelo", "Tío", "Bisabuelo"], ans: 0, exp: "Padre de mi madre es mi abuelo. Su hermano es mi tío abuelo." },
+  { q: "¿Qué es de mí el hijo del hermano de mi padre?", opts: ["Sobrino", "Primo", "Tío", "Hermano"], ans: 1, exp: "Hermano de padre es tío. Su hijo es primo." },
+  { q: "¿Quién es la suegra de la mujer de mi hermano?", opts: ["Mi abuela", "Mi tía", "Mi madre", "Mi hermana"], ans: 2, exp: "La mujer de mi hermano es mi cuñada. Su suegra es la madre de mi hermano, o sea, mi madre." },
+  { q: "¿Qué es de mí el padre del hijo del hermano de mi padre?", opts: ["Mi tío", "Mi padre", "Mi abuelo", "Mi primo"], ans: 0, exp: "Hijo del hermano del padre es mi primo. Su padre es mi tío." },
+  { q: "Mi nombre es Juan. ¿Qué parentesco tiene conmigo el tío del hijo del único hermano de mi padre?", opts: ["Mi padre", "Mi tío", "Mi abuelo", "Mi primo"], ans: 0, exp: "Único hermano de mi padre es mi tío. Su hijo es mi primo. El tío de mi primo (por parte de padre) es mi propio padre." },
+  { q: "En una habitación hay 2 madres y 2 hijas. ¿Cuántas mujeres como mínimo hay?", opts: ["4", "3", "2", "5"], ans: 1, exp: "Abuela, Madre e Hija. Hay 2 madres y 2 hijas en 3 personas." },
+  { q: "Si la hija de María es la madre de mi hija, ¿qué soy yo de María?", opts: ["Su yerno/hijo", "Su hermano", "Su sobrino", "Su padre"], ans: 0, exp: "Si la madre de mi hija es mi esposa, y ella es hija de María, soy su yerno (o hijo si fuera el caso)." },
+  { q: "¿Qué es de mí el hermano de la hija del hijo de mi abuelo?", opts: ["Mi primo o hermano", "Mi tío", "Mi sobrino", "Mi abuelo"], ans: 0, exp: "Hijo de mi abuelo puede ser mi padre o mi tío. Por tanto, su hija es mi hermana o prima." },
+
+  // ELEMENTOS RECREATIVOS (25-37)
+  { q: "En una mesa hay 3 dados comunes. ¿Cuál es la suma total de puntos de todas las caras?", opts: ["21", "42", "63", "84"], ans: 2, exp: "Un dado suma 21 (1+2+3+4+5+6). 3 dados suman 63." },
+  { q: "Tienes 3 cajas de fósforos. Si en la igualdad 'I + I = I' mueves un solo cerillo para que sea correcta, ¿qué obtienes?", opts: ["I - I = 0", "V = V", "II - I = I", "I + I = II"], ans: 2, exp: "Moviendo un palito del símbolo '+' para convertirlo en '-' y pasarlo al resultado." },
+  { q: "Si lanzas un dado y ves un 4 arriba, ¿cuánto suman las caras laterales?", opts: ["14", "17", "21", "10"], exp: "Caras opuestas suman 7. Si arriba hay 4, abajo hay 3 (total 7). Las laterales son 21 - 7 = 14.", ans: 0 },
+  { q: "Dos monedas de 1 sol están sobre la mesa. ¿Cuántas monedas iguales pueden rodearlas tangencialmente?", opts: ["6", "8", "10", "12"], ans: 1, exp: "Una moneda es rodeada por 6. Dos monedas juntas son rodeadas por 8." },
+  { q: "¿Cuántos cortes se deben dar a una varilla de 20m para tener trozos de 2m?", opts: ["10", "9", "8", "11"], ans: 1, exp: "Cortes = (Longitud total / Longitud trozo) - 1. (20/2) - 1 = 9." },
+  { q: "¿Cuántas estacas se necesitan para un terreno cuadrado de 10m de lado, si se ponen cada 2m?", opts: ["20", "18", "22", "16"], ans: 0, exp: "Perímetro = 40m. Estacas = Perímetro / distancia = 40 / 2 = 20." },
+  { q: "Un reloj da 3 campanadas en 3 segundos. ¿Cuánto tarda en dar 9 campanadas?", opts: ["9 seg", "12 seg", "8 seg", "10 seg"], ans: 1, exp: "3 campanadas = 2 intervalos de 1.5s cada uno. 9 campanadas = 8 intervalos x 1.5s = 12s." },
+  { q: "Si una bacteria se duplica cada minuto y llena un frasco en 60 min, ¿en qué minuto estaba a la mitad?", opts: ["30 min", "59 min", "45 min", "15 min"], ans: 1, exp: "Como se duplica cada minuto, un minuto antes (59) estaba a la mitad de su capacidad final." },
+  { q: "¿Cuántos cerillos como mínimo se deben quitar de la figura de 3 cuadrados iguales para que queden solo 2?", opts: ["1", "2", "3", "4"], ans: 1, exp: "Quitando 2 cerillos de una esquina se elimina un cuadrado completo." },
+  { q: "Se tienen 10 monedas. ¿Cuál es el número máximo de filas de 3 monedas que se pueden formar?", opts: ["3", "4", "5", "2"], ans: 2, exp: "Formando una estrella de 5 puntas se logran 5 filas de 3." },
+  { q: "Si el mañana del ayer es jueves, ¿qué día es hoy?", opts: ["Miércoles", "Jueves", "Viernes", "Martes"], ans: 1, exp: "Mañana(+1) del ayer(-1) es 0. O sea, hoy es Jueves." },
+  { q: "¿Cuál es el menor número de caramelos que debo sacar de una bolsa con 5 rojos y 5 azules para tener 2 del mismo color?", opts: ["2", "3", "6", "11"], ans: 1, exp: "Sacando 3 aseguras al menos un par (Principio de Palomar)." },
+  { q: "En un dado común, las caras opuestas suman siempre:", opts: ["6", "7", "5", "8"], ans: 1, exp: "Propiedad fundamental del dado: 1+6, 2+5, 3+4." },
+
+  // SUCESIONES Y SERIES (38-50)
+  { q: "¿Qué número sigue: 1, 4, 9, 16, ...?", opts: ["20", "24", "25", "36"], ans: 2, exp: "Sucesión de cuadrados perfectos: 1², 2², 3², 4², 5²=25." },
+  { q: "Halla el término que sigue: 2, 6, 12, 20, ...?", opts: ["28", "30", "32", "34"], ans: 1, exp: "La razón es +4, +6, +8, sigue +10. 20+10 = 30." },
+  { q: "Calcula el valor de la serie: 1 + 2 + 3 + ... + 40", opts: ["800", "820", "780", "1600"], ans: 1, exp: "Fórmula: n(n+1)/2 -> 40(41)/2 = 820." },
+  { q: "¿Qué letra sigue: A, C, E, G, ...?", opts: ["H", "I", "J", "K"], ans: 1, exp: "Sucesión de letras saltando una: A(b)C(d)E(f)G(h)I." },
+  { q: "Halla 'x': 5, 10, 20, 40, x", opts: ["60", "80", "100", "50"], ans: 1, exp: "La progresión es geométrica multiplicando por 2." },
+  { q: "¿Qué número sigue: 1, 1, 2, 3, 5, 8, ...?", opts: ["10", "12", "13", "15"], ans: 2, exp: "Sucesión de Fibonacci: cada término es la suma de los dos anteriores." },
+  { q: "Halla el término 20 de: 3, 5, 7, 9, ...", opts: ["39", "41", "43", "45"], ans: 1, exp: "Término enésimo: 2n + 1. Para n=20: 2(20)+1 = 41." },
+  { q: "Calcula la suma de los 10 primeros números pares naturales.", opts: ["100", "110", "120", "90"], ans: 1, exp: "Fórmula: n(n+1) -> 10(11) = 110." },
+  { q: "Qué número sigue: 80, 40, 20, 10, ...", opts: ["0", "5", "2", "1"], ans: 1, exp: "Se divide entre 2 en cada paso." },
+  { q: "Halla el valor de x + y: 2, 4, 6, 8, x, y", opts: ["22", "20", "24", "18"], ans: 0, exp: "x=10, y=12. Suma = 22." },
+  { q: "Qué número sigue: 1, 3, 7, 15, ...", opts: ["20", "25", "31", "30"], ans: 2, exp: "Razón: +2, +4, +8, sigue +16. 15+16 = 31." },
+  { q: "Calcula la suma de los primeros 5 cubos perfectos.", opts: ["225", "100", "150", "200"], ans: 0, exp: "1+8+27+64+125 = 225." },
+  { q: "Halla el número que falta: 2, 3, 5, 7, 11, ...", opts: ["12", "13", "15", "17"], ans: 1, exp: "Sucesión de números primos." }
+];
+
+let currentIdx = 0, score = 0, userFullName = "";
+const LOCK_KEY = "rm_exam_lock_v2";
+
+window.onload = () => {
+  if(localStorage.getItem(LOCK_KEY)) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('lock-screen').style.display = 'block';
+  }
+};
+
+function initQuiz() {
+  const n = document.getElementById('user-name').value;
+  const l = document.getElementById('user-lastname').value;
+  if(!n || !l) return alert("Identificación requerida");
+  userFullName = n + " " + l;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentIdx];
+  document.getElementById('q-idx').textContent = `NIVEL: ${currentIdx + 1}/50`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('explanation-box').style.display = 'none';
+  const box = document.getElementById('options-box');
+  box.innerHTML = '';
+  document.getElementById('next-btn').disabled = true;
+
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => validate(i, btn);
+    box.appendChild(btn);
+  });
+}
+
+function validate(idx, btn) {
+  const q = questions[currentIdx];
+  const allBtns = document.querySelectorAll('.option-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  if(idx === q.ans) {
+    score++;
+    btn.classList.add('correct');
+  } else {
+    btn.classList.add('wrong');
+    allBtns[q.ans].classList.add('correct');
+  }
+
+  const expBox = document.getElementById('explanation-box');
+  expBox.innerHTML = `<strong>Resultado:</strong> ${idx === q.ans ? "¡Correcto!" : "Error detectado."}<br>${q.exp}`;
+  expBox.style.display = 'block';
+
+  document.getElementById('live-score').textContent = `NOTA: ${((score / 50) * 20).toFixed(1)}`;
+  document.getElementById('next-btn').disabled = false;
+}
+
+document.getElementById('next-btn').onclick = () => {
+  currentIdx++;
+  if(currentIdx < 50) renderQuestion();
+  else showEnd();
+};
+
+function showEnd() {
+  localStorage.setItem(LOCK_KEY, "true");
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  const finalNote = (score / 50) * 20;
+  document.getElementById('final-name').textContent = userFullName;
+  document.getElementById('final-note').textContent = finalNote.toFixed(1);
+  document.getElementById('final-msg').textContent = finalNote >= 11 ? "FELICIDADES: HAS APROBADO EL CURSO." : "RECORDAR: ESTUDIE MÁS PARA LA SIGUIENTE VEZ.";
+}
+</script>
+</body>
+</html>
