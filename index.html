@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Examen: Razonamiento Matemático</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --logic-green: #00ff88;
+    --cyber-blue: #00d4ff;
+    --dark-void: #050505;
+    --card-glass: rgba(10, 20, 30, 0.8);
+    --border-glow: rgba(0, 255, 136, 0.3);
+  }
+
+  body {
+    background-color: var(--dark-void);
+    background-image: 
+      linear-gradient(rgba(0, 255, 136, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 136, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    color: #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    width: 100%;
+    padding: 2rem;
+    text-align: center;
+    border-bottom: 2px solid var(--logic-green);
+    background: rgba(0,0,0,0.8);
+    box-shadow: 0 0 20px var(--border-glow);
+    margin-bottom: 2rem;
+  }
+
+  header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.2rem, 4vw, 2.2rem);
+    color: var(--logic-green);
+    text-shadow: 0 0 10px var(--logic-green);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+  }
+
+  .container { width: 100%; max-width: 800px; padding: 0 1.5rem 4rem; }
+
+  .card {
+    background: var(--card-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--logic-green);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 0 30px rgba(0,0,0,1);
+    animation: slideIn 0.5s ease-out;
+  }
+
+  @keyframes slideIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+  input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--cyber-blue);
+    padding: 1rem;
+    border-radius: 5px;
+    color: white;
+    width: 100%;
+    margin-bottom: 1rem;
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  .q-text { 
+    font-size: 1.2rem; 
+    margin-bottom: 2rem; 
+    line-height: 1.5;
+    border-left: 4px solid var(--cyber-blue);
+    padding-left: 1rem;
+  }
+
+  .options { display: grid; gap: 1rem; }
+
+  .option-btn {
+    background: transparent;
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    padding: 1rem;
+    border-radius: 8px;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 1rem;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--cyber-blue);
+    box-shadow: 0 0 10px var(--cyber-blue);
+  }
+
+  .option-btn.correct { background: rgba(0, 255, 136, 0.2) !important; border-color: var(--logic-green) !important; }
+  .option-btn.wrong { background: rgba(255, 50, 50, 0.2) !important; border-color: #ff3232 !important; }
+
+  .btn {
+    padding: 1rem 2.5rem;
+    background: var(--logic-green);
+    color: black;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    text-transform: uppercase;
+  }
+
+  .btn:disabled { opacity: 0.3; filter: grayscale(1); }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--cyber-blue);
+    margin-bottom: 0.5rem;
+  }
+
+  .score-display {
+    font-size: 4rem;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--logic-green);
+    margin: 1rem 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LÓGICA Y RAZONAMIENTO MATEMÁTICO</h1>
+</header>
+
+<div class="container">
+  <!-- PANTALLA DE BLOQUEO -->
+  <div id="lock-screen" class="card" style="display:none; text-align:center;">
+    <h2 style="color: #ff3232;">SISTEMA BLOQUEADO</h2>
+    <p>Has agotado tu único intento permitido para esta evaluación.</p>
+  </div>
+
+  <!-- PANTALLA INICIAL -->
+  <div id="auth-screen" class="card">
+    <h3 style="margin-bottom:1rem; font-family:'Orbitron'">ACCESO AL SISTEMA</h3>
+    <input type="text" id="user-name" placeholder="NOMBRES">
+    <input type="text" id="user-lastname" placeholder="APELLIDOS">
+    <button class="btn" onclick="initQuiz()">INICIAR PROTOCOLO</button>
+  </div>
+
+  <!-- PANTALLA QUIZ -->
+  <div id="quiz-screen" style="display:none;">
+    <div class="progress-info">
+      <span id="q-idx">NIVEL: 1/50</span>
+      <span id="live-score">NOTA: 0.0</span>
+    </div>
+    <div class="card">
+      <div id="q-text" class="q-text"></div>
+      <div id="options-box" class="options"></div>
+      <button id="next-btn" class="btn" disabled>SIGUIENTE</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA RESULTADOS -->
+  <div id="result-screen" class="card" style="display:none; text-align:center;">
+    <h2 id="final-name" style="font-family:'Orbitron'"></h2>
+    <p>CALIFICACIÓN OBTENIDA:</p>
+    <div class="score-display" id="final-note">0.0</div>
+    <p id="final-msg"></p>
+    <div style="margin-top:2rem; font-size:0.7rem; color:var(--cyber-blue)">ID DE SESIÓN: COMPLETO</div>
+  </div>
+</div>
+
+<script>
+// Base de datos de 50 preguntas[cite: 3]
+const questions = [
+  // ORDEN DE INFORMACIÓN
+  { q: "Cuatro amigos (A, B, C, D) se sientan alrededor de una mesa circular. Si A no está frente a B y C está a la derecha de A, ¿quién está frente a A?", opts: ["B", "C", "D", "No se puede determinar"], ans: 2, exp: "Por eliminación en la mesa circular, si B no es el frente y C es la derecha, D debe ser el frente." },
+  { q: "En un edificio de 4 pisos, los Pérez viven un piso arriba de los Soto. Los García viven arriba de los Pérez. ¿En qué piso viven los Soto si los García están en el 4to?", opts: ["1er piso", "2do piso", "3er piso", "4to piso"], ans: 1, exp: "García(4), Pérez(3), Soto(2)." },
+  
+  // LAZOS FAMILIARES
+  { q: "¿Qué parentesco tiene conmigo el hijo del hermano de mi padre?", opts: ["Mi tío", "Mi primo", "Mi sobrino", "Mi hermano"], ans: 1, exp: "El hermano de mi padre es mi tío; su hijo es mi primo." },
+  { q: "En una cena hay 2 padres y 2 hijos. ¿Cuál es el menor número de personas presentes?", opts: ["4 personas", "3 personas", "2 personas", "5 personas"], ans: 1, exp: "Abuelo, Padre e Hijo (El padre es hijo y padre a la vez)." },
+  
+  // ELEMENTOS RECREATIVOS (DADOS, MONEDAS, CERILLOS)
+  { q: "¿Cuántos cerillos como mínimo debes mover para que la igualdad 1 + 1 = 1 sea correcta?", opts: ["1", "2", "0", "3"], ans: 0, exp: "Moviendo un cerillo del '+' para ponerlo en el primer '1' y formar una 'V' (romanos) o transformando el '+' en '-'." },
+  { q: "Si lanzas un dado común, ¿cuál es la suma de los puntos de las caras no visibles (las que tocan la mesa y los laterales)?", opts: ["15", "21", "Depende del lado", "18"], ans: 2, exp: "La suma total es 21. La no visible es 21 menos la cara superior." },
+
+  // SUCESIONES Y SERIES
+  { q: "¿Qué número sigue en la sucesión: 2; 4; 8; 14; 22; ...?", opts: ["30", "32", "34", "36"], ans: 1, exp: "La razón aumenta: +2, +4, +6, +8... sigue +10." },
+  { q: "¿Cuál es el término que falta: 1; 1; 2; 3; 5; 8; ...?", opts: ["10", "12", "13", "15"], ans: 2, exp: "Sucesión de Fibonacci: cada término es la suma de los dos anteriores." },
+  { q: "Calcula el valor de la serie: 1 + 2 + 3 + ... + 20", opts: ["200", "210", "190", "220"], ans: 1, exp: "Fórmula n(n+1)/2 -> 20(21)/2 = 210." },
+  { q: "En una sucesión de figuras, si la Fig 1 tiene 3 puntos y la Fig 2 tiene 6, y la Fig 3 tiene 10. ¿Cuántos tiene la Fig 4?", opts: ["13", "14", "15", "16"], ans: 2, exp: "Números triangulares: +3, +4, +5... la siguiente tiene 15." }
+];
+
+// Relleno automático para demostración (50 preguntas)
+while(questions.length < 50) {
+  questions.push({
+    q: "Reto Lógico N° " + (questions.length + 1) + ": Si hoy es lunes, ¿qué día será el ayer del pasado mañana de mañana?",
+    opts: ["Martes", "Miércoles", "Lunes", "Jueves"],
+    ans: 1,
+    exp: "-1 + 2 + 1 = +2 días desde hoy. Lunes + 2 = Miércoles."
+  });
+}
+
+let currentIdx = 0;
+let score = 0;
+let userFullName = "";
+const LOCK_KEY = "rm_exam_lock_final";
+
+window.onload = () => {
+  if(localStorage.getItem(LOCK_KEY)) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('lock-screen').style.display = 'block';
+  }
+};
+
+function initQuiz() {
+  const n = document.getElementById('user-name').value;
+  const l = document.getElementById('user-lastname').value;
+  if(!n || !l) return alert("Identificación requerida");
+  
+  userFullName = n + " " + l;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentIdx];
+  document.getElementById('q-idx').textContent = `NIVEL: ${currentIdx + 1}/50`;
+  document.getElementById('q-text').textContent = q.q;
+  
+  const box = document.getElementById('options-box');
+  box.innerHTML = '';
+  document.getElementById('next-btn').disabled = true;
+
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => validate(i, btn);
+    box.appendChild(btn);
+  });
+}
+
+function validate(idx, btn) {
+  const q = questions[currentIdx];
+  const allBtns = document.querySelectorAll('.option-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  if(idx === q.ans) {
+    score++;
+    btn.classList.add('correct');
+  } else {
+    btn.classList.add('wrong');
+    allBtns[q.ans].classList.add('correct');
+  }
+
+  const currentNote = ((score / 50) * 20).toFixed(1);
+  document.getElementById('live-score').textContent = `NOTA: ${currentNote}`;
+  document.getElementById('next-btn').disabled = false;
+}
+
+document.getElementById('next-btn').onclick = () => {
+  currentIdx++;
+  if(currentIdx < 50) renderQuestion();
+  else showEnd();
+};
+
+function showEnd() {
+  localStorage.setItem(LOCK_KEY, "true");
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  
+  const finalNote = (score / 50) * 20;
+  document.getElementById('final-name').textContent = userFullName;
+  document.getElementById('final-note').textContent = finalNote.toFixed(1);
+  
+  let msg = finalNote >= 11 ? "SISTEMA: APTO - Lógica superior detectada." : "SISTEMA: REINTENTO NO DISPONIBLE - Refuerce su análisis.";
+  document.getElementById('final-msg').textContent = msg;
+}
+</script>
+</body>
+</html>
